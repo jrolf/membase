@@ -53,7 +53,7 @@ class LocalMirror:
             raise ValueError(f"direction must be 'pull', 'push', or 'both', got {direction!r}")
 
         if self.local_dir is None:
-            self.local_dir = tempfile.mkdtemp(prefix="agentspace_")
+            self.local_dir = tempfile.mkdtemp(prefix="membase_")
 
         if direction in ("pull", "both"):
             sync_bucket(self.bucket_uri, self.local_dir)

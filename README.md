@@ -1,28 +1,28 @@
-# agentspace
+# membase
 
 **A fast, ergonomic workspace in the cloud for AI agents.**
 
-agentspace gives AI agents a filesystem interface backed by
+membase gives AI agents a filesystem interface backed by
 [Hugging Face Storage Buckets](https://huggingface.co/docs/hub/storage-buckets)
 — designed from the ground up for tool-calling agents that need to read, write,
 search, and organize files in persistent cloud storage.
 
 ```python
-from agentspace import Workspace
+from membase import Workspace
 
 ws = Workspace("my-project")
-ws.write("hello.txt", "Hello from Agent Space.")
+ws.write("hello.txt", "Hello from membase.")
 print(ws.read("hello.txt"))
 ```
 
-## Why agentspace?
+## Why membase?
 
 AI agents already have great filesystem tools on local machines — `Read`,
 `Write`, `Glob`, `Grep`. But when agents need **persistent, shareable,
 cloud-native storage**, they get raw APIs designed for human developers:
 long bucket URIs, manual grep loops, no batching, no parallelism.
 
-agentspace closes this gap with:
+membase closes this gap with:
 
 - **One line to start.** `ws = Workspace("my-project")` — auth is automatic,
   the bucket is created if needed.
@@ -40,7 +40,7 @@ agentspace closes this gap with:
 ## Installation
 
 ```bash
-pip install agentspace
+pip install membase
 ```
 
 Requires Python 3.9+ and a [Hugging Face account](https://huggingface.co/join)
@@ -48,7 +48,7 @@ with an API token.
 
 ### Authentication
 
-agentspace discovers credentials automatically:
+membase discovers credentials automatically:
 
 ```bash
 # Option 1: environment variable
@@ -64,7 +64,7 @@ huggingface-cli login
 ### Create a workspace and write files
 
 ```python
-from agentspace import Workspace
+from membase import Workspace
 
 ws = Workspace("my-project")
 

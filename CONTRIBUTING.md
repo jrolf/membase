@@ -1,6 +1,6 @@
-# Contributing to agentspace
+# Contributing to membase
 
-Thank you for your interest in contributing to agentspace. This document
+Thank you for your interest in contributing to membase. This document
 covers the setup, conventions, and workflow for contributing.
 
 ## Code of Conduct
@@ -18,8 +18,8 @@ Please be respectful and constructive in all interactions.
 
 ```bash
 # Clone the repository
-git clone https://github.com/jrolf/agentspace.git
-cd agentspace
+git clone https://github.com/jrolf/membase.git
+cd membase
 
 # Create a virtual environment
 python -m venv .venv
@@ -95,7 +95,7 @@ ThreadPoolExecutor with 16 workers achieves ~16x speedup.
 ## Release Process
 
 1. Merge `develop` into `main`.
-2. Bump the version in `pyproject.toml` and `src/agentspace/__init__.py`.
+2. Bump the version in `pyproject.toml` and `src/membase/__init__.py`.
 3. Add a dated entry to `CHANGELOG.md`.
 4. Push to `main` — GitHub Actions handles PyPI publishing automatically.
 

@@ -1,4 +1,4 @@
-"""agentspace — A fast, ergonomic workspace in the cloud for AI agents.
+"""membase — A fast, ergonomic workspace in the cloud for AI agents.
 
 Gives AI agents a filesystem interface backed by Hugging Face Storage
 Buckets. Designed for tool-calling agents that need to read, write,
@@ -6,10 +6,10 @@ search, and organize files in persistent cloud storage.
 
 Quick start::
 
-    from agentspace import Workspace
+    from membase import Workspace
 
     ws = Workspace("my-project")
-    ws.write("hello.txt", "Hello from Agent Space.")
+    ws.write("hello.txt", "Hello from membase.")
     print(ws.read("hello.txt"))
 
 The five essential operations — ``read``, ``write``, ``ls``, ``glob``,
@@ -19,9 +19,9 @@ The five essential operations — ``read``, ``write``, ``ls``, ``glob``,
 __version__ = "0.0.1"
 
 from .errors import (
-    AgentSpaceError,
     EditConflictError,
     FileNotFoundInWorkspaceError,
+    MembaseError,
     WorkspaceNotFoundError,
     WorkspacePermissionError,
 )
@@ -34,7 +34,7 @@ __all__ = [
     "FileStat",
     "LSEntry",
     "GrepMatch",
-    "AgentSpaceError",
+    "MembaseError",
     "EditConflictError",
     "FileNotFoundInWorkspaceError",
     "WorkspaceNotFoundError",

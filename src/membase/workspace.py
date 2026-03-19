@@ -1,4 +1,4 @@
-"""The Workspace class — the entire public API of agentspace.
+"""The Workspace class — the entire public API of membase.
 
 A Workspace is a Python object bound to a single Hugging Face Storage Bucket.
 Every filesystem operation goes through this class. Paths are always relative
@@ -19,9 +19,9 @@ from huggingface_hub import (
 from ._compat import ensure_nonempty_bytes, find_files_by_pattern
 from .cache import LocalMirror
 from .errors import (
-    AgentSpaceError,
     EditConflictError,
     FileNotFoundInWorkspaceError,
+    MembaseError,
     WorkspaceNotFoundError,
 )
 from .formatting import format_size, format_tree
@@ -116,7 +116,7 @@ class LSEntry:
 class Workspace:
     """An agent workspace backed by a Hugging Face Storage Bucket.
 
-    The primary interface for all agentspace operations. Each Workspace
+    The primary interface for all membase operations. Each Workspace
     is bound to a single bucket. All paths are relative to the workspace
     root — no URIs, no namespace prefixes.
 
@@ -134,12 +134,12 @@ class Workspace:
             (``HF_TOKEN``, ``hf auth login`` stored token).
 
     Example:
-        >>> from agentspace import Workspace
+        >>> from membase import Workspace
         >>> ws = Workspace("my-project")
-        >>> ws.write("hello.txt", "Hello from Agent Space.")
+        >>> ws.write("hello.txt", "Hello from membase.")
         'hello.txt'
         >>> ws.read("hello.txt")
-        'Hello from Agent Space.'
+        'Hello from membase.'
     """
 
     def __init__(self, name, private=True, root=None, mirror=False, token=None):
@@ -498,7 +498,7 @@ class Workspace:
             return [path]
 
         if not recursive:
-            raise AgentSpaceError(
+            raise MembaseError(
                 f"'{path}' is a directory. Use rm(path, recursive=True) to delete it."
             )
 

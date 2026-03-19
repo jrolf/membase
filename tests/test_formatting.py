@@ -1,6 +1,6 @@
 """Tests for the formatting module — no network calls needed."""
 
-from agentspace.formatting import format_ls, format_size, format_tree
+from membase.formatting import format_ls, format_size, format_tree
 
 
 class TestFormatSize:

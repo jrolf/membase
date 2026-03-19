@@ -3,7 +3,7 @@ requires = ["setuptools>=68.0", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "agentspace"
+name = "membase"
 version = "0.0.1"
 description = "A fast, ergonomic workspace in the cloud for AI agents — backed by Hugging Face Storage Buckets."
 readme = "README.md"
@@ -41,10 +41,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/jrolf/agentspace"
-Repository = "https://github.com/jrolf/agentspace"
-Issues = "https://github.com/jrolf/agentspace/issues"
-Changelog = "https://github.com/jrolf/agentspace/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/jrolf/membase"
+Repository = "https://github.com/jrolf/membase"
+Issues = "https://github.com/jrolf/membase/issues"
+Changelog = "https://github.com/jrolf/membase/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [

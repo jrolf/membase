@@ -22,16 +22,16 @@ Do **not** open a public GitHub issue for security concerns.
 
 ## Security Considerations
 
-agentspace is a thin wrapper around `huggingface_hub`. It does not
+membase is a thin wrapper around `huggingface_hub`. It does not
 implement its own authentication, encryption, or network protocols.
 Security-relevant behavior is inherited from the underlying SDK.
 
 Key points:
 
-- **API tokens.** agentspace discovers HF tokens from the environment
+- **API tokens.** membase discovers HF tokens from the environment
   (`HF_TOKEN`) or stored credentials. Never commit tokens to version
   control.
 - **Workspace visibility.** Buckets can be public or private. Ensure
   you set `private=True` (the default) for sensitive workspaces.
-- **File content.** agentspace reads and writes files to remote storage.
+- **File content.** membase reads and writes files to remote storage.
   Be mindful of what data your agents write to shared workspaces.

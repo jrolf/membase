@@ -1,4 +1,4 @@
-"""Agent-friendly error classes for agentspace.
+"""Agent-friendly error classes for membase.
 
 These exceptions are designed to give AI agents enough context to self-correct.
 Each error message includes not just what went wrong, but what the agent can
@@ -6,12 +6,12 @@ do next — listing nearby files, suggesting alternative paths, etc.
 """
 
 
-class AgentSpaceError(Exception):
-    """Base exception for all agentspace errors."""
+class MembaseError(Exception):
+    """Base exception for all membase errors."""
     pass
 
 
-class WorkspaceNotFoundError(AgentSpaceError):
+class WorkspaceNotFoundError(MembaseError):
     """Raised when a workspace (bucket) does not exist and cannot be created.
 
     Attributes:
@@ -27,10 +27,10 @@ class WorkspaceNotFoundError(AgentSpaceError):
         super().__init__(msg)
 
 
-class FileNotFoundInWorkspaceError(AgentSpaceError, FileNotFoundError):
+class FileNotFoundInWorkspaceError(MembaseError, FileNotFoundError):
     """Raised when a file does not exist in the workspace.
 
-    Inherits from both AgentSpaceError and FileNotFoundError so that
+    Inherits from both MembaseError and FileNotFoundError so that
     standard ``except FileNotFoundError`` blocks catch it naturally.
 
     The error message includes a listing of nearby files so the agent
@@ -56,7 +56,7 @@ class FileNotFoundInWorkspaceError(AgentSpaceError, FileNotFoundError):
         super().__init__(msg)
 
 
-class EditConflictError(AgentSpaceError):
+class EditConflictError(MembaseError):
     """Raised when an edit() call cannot find the old string in the file.
 
     This tells the agent that the file content doesn't match what it
@@ -80,7 +80,7 @@ class EditConflictError(AgentSpaceError):
         )
 
 
-class WorkspacePermissionError(AgentSpaceError, PermissionError):
+class WorkspacePermissionError(MembaseError, PermissionError):
     """Raised when the agent lacks permission to access a workspace.
 
     Attributes:

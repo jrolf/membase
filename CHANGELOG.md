@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial release of agentspace.
+- Initial release of membase.
 - `Workspace` class backed by Hugging Face Storage Buckets.
 - Core file operations: `read`, `write`, `edit`, `append`, `rm`, `mv`, `cp`.
 - Batch operations: `write_many` (single network call), `read_many` (parallel).
@@ -25,5 +25,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 30 unit tests covering formatting, errors, search, and compatibility.
 - GitHub Actions workflow for automatic PyPI publishing on push to main.
 
-[Unreleased]: https://github.com/jrolf/agentspace/compare/v0.0.1...HEAD
-[0.0.1]: https://github.com/jrolf/agentspace/releases/tag/v0.0.1
+[Unreleased]: https://github.com/jrolf/membase/compare/v0.0.1...HEAD
+[0.0.1]: https://github.com/jrolf/membase/releases/tag/v0.0.1

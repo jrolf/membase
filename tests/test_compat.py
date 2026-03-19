@@ -1,6 +1,6 @@
 """Tests for the compatibility / workaround layer."""
 
-from agentspace._compat import ensure_nonempty_bytes
+from membase._compat import ensure_nonempty_bytes
 
 
 class TestEnsureNonemptyBytes:

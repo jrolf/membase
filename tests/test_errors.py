@@ -1,9 +1,9 @@
 """Tests for agent-friendly error classes."""
 
-from agentspace.errors import (
-    AgentSpaceError,
+from membase.errors import (
     EditConflictError,
     FileNotFoundInWorkspaceError,
+    MembaseError,
     WorkspaceNotFoundError,
     WorkspacePermissionError,
 )
@@ -38,7 +38,7 @@ class TestFileNotFoundInWorkspaceError:
         """Ensure standard except FileNotFoundError catches it."""
         err = FileNotFoundInWorkspaceError("x.py", "proj")
         assert isinstance(err, FileNotFoundError)
-        assert isinstance(err, AgentSpaceError)
+        assert isinstance(err, MembaseError)
 
 
 class TestEditConflictError:

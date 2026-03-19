@@ -3,7 +3,7 @@
 import os
 import tempfile
 
-from agentspace.search import GrepMatch, local_grep
+from membase.search import GrepMatch, local_grep
 
 
 class TestGrepMatch:
