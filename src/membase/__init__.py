@@ -16,7 +16,7 @@ The five essential operations — ``read``, ``write``, ``ls``, ``glob``,
 ``grep`` — cover the vast majority of agent filesystem needs.
 """
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 from .errors import (
     EditConflictError,
