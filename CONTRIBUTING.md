@@ -99,6 +99,19 @@ ThreadPoolExecutor with 16 workers achieves ~16x speedup.
 3. Add a dated entry to `CHANGELOG.md`.
 4. Push to `main` — GitHub Actions handles PyPI publishing automatically.
 
+## Style Convention
+
+Use `import membase as mb` in all examples and documentation:
+
+```python
+import membase as mb
+
+ws = mb.Workspace("my-project")
+```
+
+This keeps examples compact and makes the library name visible at every
+call site.
+
 ## Questions?
 
 Open an issue or reach out at james@think.dev.

@@ -6,9 +6,9 @@ search, and organize files in persistent cloud storage.
 
 Quick start::
 
-    from membase import Workspace
+    import membase as mb
 
-    ws = Workspace("my-project")
+    ws = mb.Workspace("my-project")
     ws.write("hello.txt", "Hello from membase.")
     print(ws.read("hello.txt"))
 
@@ -26,14 +26,23 @@ from .errors import (
     WorkspacePermissionError,
 )
 from .search import GrepMatch
-from .workspace import FileStat, LSEntry, Workspace, WorkspaceInfo
+from .workspace import (
+    FileStat,
+    LSEntry,
+    Workspace,
+    WorkspaceInfo,
+    WorkspaceSummary,
+    list_workspaces,
+)
 
 __all__ = [
     "Workspace",
     "WorkspaceInfo",
+    "WorkspaceSummary",
     "FileStat",
     "LSEntry",
     "GrepMatch",
+    "list_workspaces",
     "MembaseError",
     "EditConflictError",
     "FileNotFoundInWorkspaceError",

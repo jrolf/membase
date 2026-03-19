@@ -1,11 +1,20 @@
-"""The Workspace class — the entire public API of membase.
+"""The Workspace class and module-level helpers — the public API of membase.
 
 A Workspace is a Python object bound to a single Hugging Face Storage Bucket.
 Every filesystem operation goes through this class. Paths are always relative
 to the workspace root.
+
+Usage::
+
+    import membase as mb
+
+    ws = mb.Workspace("my-project")
+    ws.write("notes.txt", "hello")
+    print(ws.read("notes.txt"))
 """
 
 import fnmatch
+import os
 
 from huggingface_hub import (
     HfFileSystem,
@@ -14,6 +23,7 @@ from huggingface_hub import (
     create_bucket,
     delete_bucket,
     list_bucket_tree,
+    list_buckets,
 )
 
 from ._compat import ensure_nonempty_bytes, find_files_by_pattern
@@ -27,11 +37,94 @@ from .errors import (
 from .formatting import format_size, format_tree
 from .search import local_grep, parallel_grep
 
+# ── module-level functions ─────────────────────────────────────────────
+
+
+class WorkspaceSummary:
+    """Lightweight summary of an existing workspace.
+
+    Returned by ``mb.list_workspaces()``. Contains only metadata that
+    can be retrieved cheaply (no file listing or size computation).
+
+    Attributes:
+        bucket_id: Full bucket identifier ("namespace/name").
+        name: The bucket name (without namespace).
+        namespace: The owner namespace (user or org).
+        private: Whether the workspace is private.
+        created_at: Creation timestamp (datetime or None).
+    """
+
+    __slots__ = ("bucket_id", "name", "namespace", "private", "created_at")
+
+    def __init__(self, bucket_id, name, namespace, private, created_at):
+        self.bucket_id = bucket_id
+        self.name = name
+        self.namespace = namespace
+        self.private = private
+        self.created_at = created_at
+
+    def __repr__(self):
+        vis = "private" if self.private else "public"
+        return f"WorkspaceSummary('{self.bucket_id}', {vis})"
+
+
+def list_workspaces(namespace=None, token=None):
+    """List all workspaces (buckets) visible to the authenticated user.
+
+    Use this to discover existing workspaces before opening one.
+
+    Args:
+        namespace: Optional username or org to scope the listing.
+            If None, lists all buckets the token has access to.
+        token: HF API token. If None, auto-discovers from environment.
+
+    Returns:
+        List of WorkspaceSummary objects.
+
+    Example::
+
+        import membase as mb
+
+        # List all your workspaces
+        for ws in mb.list_workspaces():
+            print(ws)
+
+        # List workspaces in a specific namespace
+        for ws in mb.list_workspaces(namespace="my-org"):
+            print(ws)
+    """
+    kwargs = {}
+    if namespace:
+        kwargs["namespace"] = namespace
+    if token:
+        kwargs["token"] = token
+
+    results = []
+    for b in list_buckets(**kwargs):
+        bid = b.bucket_id
+        if "/" in bid:
+            ns, name = bid.split("/", 1)
+        else:
+            ns, name = "", bid
+
+        results.append(WorkspaceSummary(
+            bucket_id=bid,
+            name=name,
+            namespace=ns,
+            private=b.private,
+            created_at=getattr(b, "created_at", None),
+        ))
+
+    return results
+
+
+# ── data classes ───────────────────────────────────────────────────────
+
 
 class WorkspaceInfo:
     """Metadata about a workspace.
 
-    Returned by ``Workspace.info()``. Has a compact ``__repr__`` for
+    Returned by ``ws.info()``. Has a compact ``__repr__`` for
     agent consumption.
 
     Attributes:
@@ -68,7 +161,7 @@ class WorkspaceInfo:
 class FileStat:
     """Metadata about a single file.
 
-    Returned by ``Workspace.stat()``.
+    Returned by ``ws.stat()``.
 
     Attributes:
         path: Relative path within the workspace.
@@ -113,6 +206,9 @@ class LSEntry:
         return f"{self.name} ({format_size(self.size)})"
 
 
+# ── the Workspace class ───────────────────────────────────────────────
+
+
 class Workspace:
     """An agent workspace backed by a Hugging Face Storage Bucket.
 
@@ -133,13 +229,13 @@ class Workspace:
         token: HF API token. If None, auto-discovers from environment
             (``HF_TOKEN``, ``hf auth login`` stored token).
 
-    Example:
-        >>> from membase import Workspace
-        >>> ws = Workspace("my-project")
-        >>> ws.write("hello.txt", "Hello from membase.")
-        'hello.txt'
-        >>> ws.read("hello.txt")
-        'Hello from membase.'
+    Example::
+
+        import membase as mb
+
+        ws = mb.Workspace("my-project")
+        ws.write("hello.txt", "Hello from membase.")
+        print(ws.read("hello.txt"))
     """
 
     def __init__(self, name, private=True, root=None, mirror=False, token=None):
@@ -615,6 +711,42 @@ class Workspace:
 
         return entries
 
+    def walk(self, path=""):
+        """Walk the workspace directory tree top-down.
+
+        Yields ``(dirpath, dirnames, filenames)`` tuples, similar to
+        ``os.walk()``. Directory and file names are relative to the
+        workspace root.
+
+        Args:
+            path: Subtree root. Defaults to entire workspace.
+
+        Yields:
+            Tuples of (dirpath, dirnames, filenames) where dirpath is
+            a string, dirnames is a list of subdirectory names, and
+            filenames is a list of file names in that directory.
+
+        Example:
+            >>> for dirpath, dirs, files in ws.walk():
+            ...     for f in files:
+            ...         print(f"{dirpath}/{f}" if dirpath else f)
+        """
+        full = self._full_path(path)
+
+        root_prefix = f"{self._bucket_path}/"
+        if self._root:
+            root_prefix = f"{self._bucket_path}/{self._root}/"
+
+        for dirpath, dirnames, filenames in self._fs.walk(full):
+            if dirpath.startswith(root_prefix):
+                rel_dir = dirpath[len(root_prefix):]
+            elif dirpath == root_prefix.rstrip("/"):
+                rel_dir = ""
+            else:
+                rel_dir = dirpath
+
+            yield rel_dir, list(dirnames), list(filenames)
+
     def tree(self, path="", depth=None):
         """Generate an ASCII tree representation of the workspace.
 
@@ -699,7 +831,7 @@ class Workspace:
         return sorted(self._rel_path(m) for m in full_matches)
 
     def grep(self, pattern, include=None, exclude=None, max_results=200,
-             context=0, max_workers=16):
+             max_workers=16):
         """Search for a regex pattern inside file contents.
 
         Uses parallel reads by default (16 workers, ~16x speedup over
@@ -713,8 +845,6 @@ class Workspace:
             exclude: Optional glob pattern to exclude files from search.
             max_results: Maximum matches to return. Prevents flooding the
                 agent's context. Defaults to 200.
-            context: Number of context lines before/after each match.
-                Defaults to 0.
             max_workers: Number of parallel reader threads. Defaults to 16.
 
         Returns:
@@ -729,10 +859,10 @@ class Workspace:
             return self._grep_local(pattern, include, exclude, max_results)
 
         return self._grep_remote(pattern, include, exclude, max_results,
-                                 context, max_workers)
+                                 max_workers)
 
     def _grep_remote(self, pattern, include, exclude, max_results,
-                     context, max_workers):
+                     max_workers):
         """Grep using parallel remote reads."""
         search_root = self._full_path("")
         all_files = self._fs.find(search_root)
@@ -754,7 +884,7 @@ class Workspace:
 
         return parallel_grep(
             self._fs, search_root, filtered, pattern,
-            max_results=max_results, context=context, max_workers=max_workers,
+            max_results=max_results, max_workers=max_workers,
         )
 
     def _grep_local(self, pattern, include, exclude, max_results):
@@ -788,6 +918,42 @@ class Workspace:
         """
         full = self._full_path(path)
         return self._fs.exists(full)
+
+    def is_file(self, path):
+        """Check whether a path is a file.
+
+        Args:
+            path: Relative path to check.
+
+        Returns:
+            True if the path exists and is a file, False otherwise.
+
+        Example:
+            >>> ws.is_file("src/main.py")
+            True
+            >>> ws.is_file("src/")
+            False
+        """
+        full = self._full_path(path)
+        return self._fs.isfile(full)
+
+    def is_dir(self, path):
+        """Check whether a path is a directory.
+
+        Args:
+            path: Relative path to check.
+
+        Returns:
+            True if the path exists and is a directory, False otherwise.
+
+        Example:
+            >>> ws.is_dir("src/")
+            True
+            >>> ws.is_dir("src/main.py")
+            False
+        """
+        full = self._full_path(path)
+        return self._fs.isdir(full)
 
     def stat(self, path):
         """Get metadata for a file or directory.
@@ -837,6 +1003,40 @@ class Workspace:
         full = self._full_path(path)
         return self._fs.du(full)
 
+    # ── download ──────────────────────────────────────────────────────
+
+    def download(self, remote_path, local_path):
+        """Download a file from the workspace to the local filesystem.
+
+        Useful when an agent needs a local copy of a file — for example
+        to pass it to a tool that only accepts local paths.
+
+        Args:
+            remote_path: Relative path in the workspace.
+            local_path: Destination path on the local filesystem. Parent
+                directories are created automatically.
+
+        Returns:
+            The local_path that was written to.
+
+        Raises:
+            FileNotFoundInWorkspaceError: If the remote file does not exist.
+
+        Example:
+            >>> ws.download("data/results.csv", "/tmp/results.csv")
+            '/tmp/results.csv'
+        """
+        content = self.read(remote_path, binary=True)
+
+        parent = os.path.dirname(local_path)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+
+        with open(local_path, "wb") as f:
+            f.write(content)
+
+        return local_path
+
     # ── workspace metadata ────────────────────────────────────────────
 
     def info(self):
@@ -854,7 +1054,9 @@ class Workspace:
         """
         bi = bucket_info(self._bucket_id, token=self._token)
 
-        items = list(list_bucket_tree(self._bucket_id, recursive=True, token=self._token))
+        items = list(
+            list_bucket_tree(self._bucket_id, recursive=True, token=self._token)
+        )
         file_count = sum(1 for i in items if getattr(i, "type", None) == "file")
         file_items = [i for i in items if getattr(i, "type", None) == "file"]
         total_size = sum(getattr(i, "size", 0) for i in file_items)
@@ -871,28 +1073,30 @@ class Workspace:
 
     # ── sync and caching ─────────────────────────────────────────────
 
-    def sync(self, direction="pull"):
+    def sync(self, direction="pull", delete=False):
         """Sync the workspace with its local mirror.
 
-        Requires ``mirror=True`` when the workspace was created. If no
-        mirror exists, creates one automatically.
+        If no mirror exists, creates one automatically.
 
         Args:
             direction: One of "pull" (remote -> local), "push" (local ->
                 remote), or "both". Defaults to "pull".
+            delete: If True, enables mirror-mode sync — local files not
+                present on the remote are deleted during pull (like
+                ``rsync --delete``). Defaults to False (additive only).
 
         Returns:
             Path to the local mirror directory.
 
         Example:
-            >>> ws = Workspace("my-project", mirror=True)
+            >>> ws = mb.Workspace("my-project", mirror=True)
             >>> local_path = ws.sync()
         """
         if self._mirror is None:
             self._mirror = LocalMirror(self._bucket_id, self._bucket_uri)
             self._mirror_enabled = True
 
-        return self._mirror.sync(direction=direction)
+        return self._mirror.sync(direction=direction, delete=delete)
 
     def invalidate(self):
         """Clear cached metadata and mark the local mirror as stale.
@@ -956,7 +1160,7 @@ class Workspace:
             token: HF API token.
 
         Example:
-            >>> Workspace.delete("scratch-workspace", missing_ok=True)
+            >>> mb.Workspace.delete("scratch-workspace", missing_ok=True)
         """
         try:
             delete_bucket(name, missing_ok=missing_ok, token=token)

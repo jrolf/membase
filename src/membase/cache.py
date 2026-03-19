@@ -34,12 +34,15 @@ class LocalMirror:
         self.local_dir = None
         self.is_synced = False
 
-    def sync(self, direction="pull"):
+    def sync(self, direction="pull", delete=False):
         """Sync between the local mirror and the remote bucket.
 
         Args:
             direction: One of "pull" (remote -> local), "push" (local -> remote),
                 or "both" (pull then push). Defaults to "pull".
+            delete: If True, enables mirror-mode sync where files not present
+                on the source are removed from the destination. Like
+                ``rsync --delete``. Defaults to False (additive only).
 
         Returns:
             The local directory path.
@@ -50,17 +53,19 @@ class LocalMirror:
         from huggingface_hub import sync_bucket
 
         if direction not in ("pull", "push", "both"):
-            raise ValueError(f"direction must be 'pull', 'push', or 'both', got {direction!r}")
+            raise ValueError(
+                f"direction must be 'pull', 'push', or 'both', got {direction!r}"
+            )
 
         if self.local_dir is None:
             self.local_dir = tempfile.mkdtemp(prefix="membase_")
 
         if direction in ("pull", "both"):
-            sync_bucket(self.bucket_uri, self.local_dir)
+            sync_bucket(self.bucket_uri, self.local_dir, delete=delete)
             self.is_synced = True
 
         if direction in ("push", "both"):
-            sync_bucket(self.local_dir, self.bucket_uri)
+            sync_bucket(self.local_dir, self.bucket_uri, delete=delete)
 
         return self.local_dir
 

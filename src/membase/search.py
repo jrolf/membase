@@ -42,7 +42,7 @@ class GrepMatch:
 
 
 def parallel_grep(hffs, bucket_path, file_paths, pattern, max_results=200,
-                   context=0, max_workers=16):
+                   max_workers=16):
     """Search for a regex pattern across multiple files using parallel reads.
 
     Reads files concurrently via ThreadPoolExecutor, then searches each
@@ -56,8 +56,6 @@ def parallel_grep(hffs, bucket_path, file_paths, pattern, max_results=200,
         pattern: Regex pattern string. Compiled internally.
         max_results: Maximum number of matches to return. Prevents flooding
             the agent's context with thousands of matches. Defaults to 200.
-        context: Number of context lines before and after each match
-            (like ``grep -C``). Defaults to 0.
         max_workers: Number of parallel reader threads. 16 is the sweet
             spot based on experimental benchmarks.
 
